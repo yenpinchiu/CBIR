@@ -6,31 +6,62 @@ import java.util.TreeMap;
 
 public class content_based_image_retrieval_system {
 
-	HashMap<String,HashMap<String,ArrayList<Double>>> picture_feature_maps_map = new HashMap<String,HashMap<String,ArrayList<Double>>>();
+	HashMap<String,HashMap<String,ArrayList<Double>>> all_pictures_features = new HashMap<String,HashMap<String,ArrayList<Double>>>();
 	
-	public content_based_image_retrieval_system(String all_picture_path){
-
-		File dir = new File(all_picture_path);
+	boolean enable_regional_color_histogram = false;
+	boolean enable_uniform_local_binary_patterns = false;
+	boolean enable_random_projection_on_uniform_local_binary_patterns_1 = false;
+	boolean enable_random_projection_on_uniform_local_binary_patterns_2 = false;
+	boolean enable_random_projection_on_uniform_local_binary_patterns_3 = false;
+	
+	public content_based_image_retrieval_system(String indexed_folder_path,String... args){
+		
+		for (String arg : args) {
+			if (arg == "enable_regional_color_histogram"){
+				enable_regional_color_histogram = true;
+			}
+			if (arg == "enable_uniform_local_binary_patterns"){
+				enable_uniform_local_binary_patterns = true;
+			}
+			if (arg == "enable_random_projection_on_uniform_local_binary_patterns_1"){
+				enable_random_projection_on_uniform_local_binary_patterns_1 = true;
+			}
+			if (arg == "enable_random_projection_on_uniform_local_binary_patterns_2"){
+				enable_random_projection_on_uniform_local_binary_patterns_2 = true;
+			}
+			if (arg == "enable_random_projection_on_uniform_local_binary_patterns_3"){
+				enable_random_projection_on_uniform_local_binary_patterns_3 = true;
+			}
+		} 
+		
+		File dir = new File( indexed_folder_path);
 		File[] filelist= dir.listFiles();
 		for(int i=0;i<filelist.length;i++){
 			int[][][] current_picture = tools.open_picture(filelist[i].toString(),true);
-			picture_feature_maps_map.put(filelist[i].toString(),new HashMap<String,ArrayList<Double>>());
+			all_pictures_features.put(filelist[i].toString(),new HashMap<String,ArrayList<Double>>());
 			
-			//////// Choose the features used. Note that the random projection features are depend on the uniform local binary patterns features so thet must be activate at the same time.////
-			picture_feature_maps_map.get(filelist[i].toString()).put("regional_color_histogram_feature",regional_color_histogram_feature(current_picture,2 ,2));
-			picture_feature_maps_map.get(filelist[i].toString()).put("uniform_local_binary_patterns_feature",uniform_local_binary_patterns_feature(current_picture,2 ,2));
-			//picture_feature_maps_map.get(filelist[i].toString()).put("random_projection_on_uniform_local_binary_patterns_feature_1/4d",new random_projection(picture_feature_maps_map.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature"),1*picture_feature_maps_map.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature").size()/4,1).random_projection_features);
-			//picture_feature_maps_map.get(filelist[i].toString()).put("random_projection_on_uniform_local_binary_patterns_feature_2/4d",new random_projection(picture_feature_maps_map.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature"),2*picture_feature_maps_map.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature").size()/4,1).random_projection_features);
-			//picture_feature_maps_map.get(filelist[i].toString()).put("random_projection_on_uniform_local_binary_patterns_feature_3/4d",new random_projection(picture_feature_maps_map.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature"),3*picture_feature_maps_map.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature").size()/4,1).random_projection_features);
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			
+			if(enable_regional_color_histogram == true){
+				all_pictures_features.get(filelist[i].toString()).put("regional_color_histogram_feature",regional_color_histogram_feature(current_picture,2 ,2));
+			}
+			if(enable_uniform_local_binary_patterns == true){
+				all_pictures_features.get(filelist[i].toString()).put("uniform_local_binary_patterns_feature",uniform_local_binary_patterns_feature(current_picture,2 ,2));
+			}
+			if(enable_random_projection_on_uniform_local_binary_patterns_1 == true){
+				all_pictures_features.get(filelist[i].toString()).put("random_projection_on_uniform_local_binary_patterns_feature_1/4d",new random_projection(all_pictures_features.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature"),1*all_pictures_features.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature").size()/4,1).random_projection_features);
+			}
+			if(enable_random_projection_on_uniform_local_binary_patterns_2 == true){
+				all_pictures_features.get(filelist[i].toString()).put("random_projection_on_uniform_local_binary_patterns_feature_2/4d",new random_projection(all_pictures_features.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature"),2*all_pictures_features.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature").size()/4,1).random_projection_features);
+			}
+			if(enable_random_projection_on_uniform_local_binary_patterns_3 == true){
+				all_pictures_features.get(filelist[i].toString()).put("random_projection_on_uniform_local_binary_patterns_feature_3/4d",new random_projection(all_pictures_features.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature"),3*all_pictures_features.get(filelist[i].toString()).get("uniform_local_binary_patterns_feature").size()/4,1).random_projection_features);
+			}
 			System.out.println(filelist[i].toString()+" indexed");
 		}
 	}
 	
-	public ArrayList<Double> regional_color_histogram_feature(int[][][] picture,int row ,int column){
+	public ArrayList<Double> regional_color_histogram_feature(int[][][] picture,int split_row_size ,int  split_column_size ){
 		ArrayList<Double> picture_feature_list = new ArrayList<Double>();
-		int[][][][][] split_picture = tools.split(picture,row,column);
+		int[][][][][] split_picture = tools.split(picture,split_row_size,split_column_size);
 		for(int x=0;x<split_picture.length;x++){
 			for(int y=0;y<split_picture[x].length;y++){
 				color_histogram current_split_picture_color_histogram = new color_histogram(split_picture[x][y]);
